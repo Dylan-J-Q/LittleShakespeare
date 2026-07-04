@@ -1,8 +1,8 @@
 import torch 
+import torch.nn as nn
 from preprocessing import CharTokenizer, ShakespeareDataset
+from model_components import EmbeddingLayer
 from torch.utils.data import DataLoader
-
-DATA_FILE_PATH = "data/LittleShakespeare.txt"
 
 def main():
     raw_text = "To be or not to be, that is the question."

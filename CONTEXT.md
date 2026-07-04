@@ -21,10 +21,10 @@ Place all other files in root folder for simplicity.
 ## Development Roadmap
 
 ### Phase 1: Data & Preprocessing
-- [ ] Script to load and process the single 'LittleShakespeare.txt' file into a usable format.
-- [ ] Implementation of a basic tokenizer (character-level or Byte Pair Encoding).
-- [ ] Mapping characters/tokens to integers and creating a vocabulary.
-- [ ] Dataset and DataLoader implementation for PyTorch efficiently handling batches.
+- [x] Script to load and process the single 'LittleShakespeare.txt' file into a usable format.
+- [x] Implementation of a basic tokenizer (character-level or Byte Pair Encoding).
+- [x] Mapping characters/tokens to integers and creating a vocabulary.
+- [x] Dataset and DataLoader implementation for PyTorch efficiently handling batches.
 
 ### Phase 2: Basic Building Blocks
 - [ ] **Embedding Layer**: Converting tokens into dense vectors.
