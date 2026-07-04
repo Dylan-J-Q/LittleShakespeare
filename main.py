@@ -1,8 +1,7 @@
-import torch 
-import torch.nn as nn
 from preprocessing import CharTokenizer, ShakespeareDataset
-from model_components import EmbeddingLayer
+from model_components import EmbeddingLayer, PositionalEncoding, TransformerBlock
 from torch.utils.data import DataLoader
+
 
 def main():
     raw_text = "To be or not to be, that is the question."

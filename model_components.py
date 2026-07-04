@@ -1,6 +1,7 @@
 import math
 import torch 
 import torch.nn as nn
+import torch.nn.functional as F
 
 class EmbeddingLayer(nn.Module):
     def __init__(self, vocab_size: int, embedding_dim: int):
@@ -40,3 +41,69 @@ class LayerNormalisation(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.norm(x)
+    
+
+class MultiHeadAttention(nn.Module):
+    def __init__(self, d_model, num_heads: int):
+        super().__init__()
+        assert d_model % num_heads == 0, "d_model must be divisible by num_heads"
+
+        self.d_model = d_model
+        self.num_heads = num_heads
+        self.depth = d_model // num_heads
+
+        self.q_kv_projection = nn.Linear(d_model, d_model * 3) 
+        self.out_projection = nn.Linear(d_model, d_model)
+
+    def forward(self, x, mask=None):
+        batch_size, seq_len, _ = x.shape
+
+        qkv = self.q_kv_projection(x)
+        q, k, v = torch.split(qkv, self.d_model, dim=-1)
+
+        q = q.view(batch_size, seq_len, self.num_heads, self.depth).transpose(1, 2)
+        k = k.view(batch_size, seq_len, self.num_heads, self.depth).transpose(1, 2) 
+        v = v.view(batch_size, seq_len, self.num_heads, self.depth).transpose(1, 2)
+
+        attention_weights = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(self.depth)
+
+        if mask is not None:
+            attention_weights = attention_weights.masked_fill(mask == 0, float('-inf'))
+
+        attention_probabilities = F.softmax(attention_weights, dim=-1)
+
+        out = torch.matmul(attention_probabilities, v)
+        out = out.transpose(1, 2).contiguous().view(batch_size, seq_len, self.d_model)
+        return self.out_projection(out)
+    
+
+class FeedForwardNetwork(nn.Module):
+    def __init__(self, d_model: int, hidden_dim: int):
+        super().__init__()
+        self.linear1 = nn.Linear(d_model, hidden_dim)
+        self.linear2 = nn.Linear(hidden_dim, d_model)
+
+    def forward(self, x: torch.Tensor, activation_function: callable = F.relu) -> torch.Tensor:
+        return self.linear2(activation_function(self.linear1(x)))
+    
+    
+class TransformerBlock(nn.Module):
+    def __init__(self, d_model: int, num_heads: int, ff_hidden_dim: int):
+        super().__init__()
+        self.mha = MultiHeadAttention(d_model, num_heads)
+        self.ln1 = LayerNormalisation(d_model)
+        self.ffn = FeedForwardNetwork(d_model, ff_hidden_dim)
+        self.ln2 = LayerNormalisation(d_model)
+
+    def forward(self, x, mask=None):
+        identity = x
+        x = self.ln1(x)  # Residual connection
+        x = self.mha(x, mask=mask)
+        x = x + identity
+
+        identity = x
+        x = self.ln2(x)  # Residual connection
+        x = self.ffn(x)
+        x = x + identity
+
+        return x

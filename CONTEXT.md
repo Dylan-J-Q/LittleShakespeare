@@ -27,17 +27,17 @@ Place all other files in root folder for simplicity.
 - [x] Dataset and DataLoader implementation for PyTorch efficiently handling batches.
 
 ### Phase 2: Basic Building Blocks
-- [ ] **Embedding Layer**: Converting tokens into dense vectors.
-- [ ] **Positional Encoding**: Implementing fixed or learned positions so the model knows word order.
-- [ ] **Layer Normalization**: Ensuring training stability across layers.
+- [x] **Embedding Layer**: Converting tokens into dense vectors.
+- [x] **Positional Encoding**: Implementing fixed or learned positions so the model knows word order.
+- [x] **Layer Normalization**: Ensuring training stability across layers.
 
 ### Phase 3: The Transformer Architecture (The Core)
-- [ ] **Multi-Head Attention (MHA)**:
+- [x] **Multi-Head Attention (MHA)**:
     - Manually implement the $Q, K, V$ calculations.
     - Implement the multi-head splitting and concatenation logic.
     - Visualize attention maps during development to see how the model "focuses."
-- [ ] **Feed Forward Network (FFN)**: Implementing the linear layers and activation functions (e.g., GELU/ReLU).
-- [ ] **Transformer Block**: Combining MHA, LayerNorm, and FFN into a repeatable block unit.
+- [x] **Feed Forward Network (FFN)**: Implementing the linear layers and activation functions (e.g., GELU/ReLU).
+- [x] **Transformer Block**: Combining MHA, LayerNorm, and FFN into a repeatable block unit.
 
 ### Phase 4: Training & Optimization
 - [ ] Implementation of the training loop (Forward pass, Loss calculation, Backpropagation).
@@ -59,6 +59,6 @@ To ensure the pursuit of mastery in both transformer architecture and high-level
     - **Correctness**: Does it perform exactly what it's intended to do?
     - **Efficiency**: Is it optimized for PyTorch (vectorized operations, avoiding unnecessary loops)?
     - **Quality/Style**: Does it follow YAGNI (You Ain't Gonna Need It), maintain high readability, and modularity?
-6. **Deep Inquiry (The Grilling):** Upon successful implementation, I will conduct a technical "interrogation." The user must explain the internal state of their code, how specific dimensions change during the forward pass, and how it would behave if hyperparameters or input shapes were altered. 
+6. **Deep Inquiry:** Upon successful implementation, I will conduct a technical "interrogation." The user must explain the internal state of their code, as well as intuitive explanations of what is happening and why. 
 
-The user is expected to struggle; my role is not just to provide answers, but to guide the user through the resistance until mastery is achieved.
+Make sure to stop after each section and allow the user to respond if they want. The user is expected to struggle; my role is not just to provide answers, but to guide the user through the resistance until mastery is achieved.
