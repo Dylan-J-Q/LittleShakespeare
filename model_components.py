@@ -86,7 +86,7 @@ class FeedForwardNetwork(nn.Module):
     def forward(self, x: torch.Tensor, activation_function: callable = F.relu) -> torch.Tensor:
         return self.linear2(activation_function(self.linear1(x)))
     
-    
+
 class TransformerBlock(nn.Module):
     def __init__(self, d_model: int, num_heads: int, ff_hidden_dim: int):
         super().__init__()
@@ -107,3 +107,27 @@ class TransformerBlock(nn.Module):
         x = x + identity
 
         return x
+    
+
+class TransformerModel(nn.Module):
+    def __init__(self, vocab_size: int, d_model: int, num_heads: int, ff_hidden_dim: int, num_layers: int):
+        super().__init__()
+        self.embedding = EmbeddingLayer(vocab_size, d_model)
+        self.pos_encoding = PositionalEncoding(d_model)
+        self.transformer_blocks = nn.ModuleList([TransformerBlock(d_model, num_heads, ff_hidden_dim) for _ in range(num_layers)])
+        self.output_layer = nn.Linear(d_model, vocab_size)
+
+    def forward(self, x, mask=None):
+        x = self.embedding(x)
+        x = self.pos_encoding(x)
+
+        batch_size, seq_len, _ = x.shape
+        if mask is None:
+            # Create a causal mask: lower triangular matrix of 1s, upper triangular of 0s
+            # Shape: (1, 1, seq_len, seq_len) for broadcasting
+            mask = torch.tril(torch.ones((seq_len, seq_len), device=x.device)).unsqueeze(0).unsqueeze(0)
+
+        for block in self.transformer_blocks:
+            x = block(x, mask=mask)
+
+        return self.output_layer(x)

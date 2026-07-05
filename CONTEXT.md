@@ -40,8 +40,8 @@ Place all other files in root folder for simplicity.
 - [x] **Transformer Block**: Combining MHA, LayerNorm, and FFN into a repeatable block unit.
 
 ### Phase 4: Training & Optimization
-- [ ] Implementation of the training loop (Forward pass, Loss calculation, Backpropagation).
-- [ ] Hyperparameter selection (Learning rate, Batch size, Weight decay).
+- [x] Implementation of the training loop (Forward pass, Loss calculation, Backpropagation).
+- [x] Hyperparameter selection (Learning rate, Batch size, Weight decay).
 - [ ] Monitoring loss curves to evaluate convergence.
 
 ### Phase 5: Inference & Generation

@@ -1,5 +1,5 @@
 import torch 
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 from typing import List
 from abc import ABC, abstractmethod
 
@@ -30,7 +30,8 @@ class BaseTokenizer(ABC):
         pass
 
     def get_vocab_size(self) -> int:
-        return len(self.vocab)
+        # Ensure the vocabulary size includes all special tokens to avoid index out of range errors
+        return len(self.vocab) + len(SPECIAL_TOKENS)
     
 
 
@@ -64,9 +65,11 @@ class ShakespeareDataset(Dataset):
     def _preprocess(self, text: str) -> List[List[int]]:
         full_sequence = self.tokenizer.encode(text)
         blocks = []
+        # We need block_size + 1 tokens to create a pair of (input, target)
+        # where target is input shifted by 1.
         for i in range(0, len(full_sequence) - self.block_size, self.block_size):
-            chunk = full_sequence[i : i + self.block_size]
-            if len(chunk) == self.block_size: 
+            chunk = full_sequence[i : i + self.block_size + 1]
+            if len(chunk) == self.block_size + 1: 
                 blocks.append(chunk)
         
         return blocks
@@ -74,5 +77,8 @@ class ShakespeareDataset(Dataset):
     def __len__(self):
         return len(self.data)
 
-    def __getitem__(self, idx: int) -> torch.Tensor:
-        return torch.tensor(self.data[idx], dtype=torch.long)
+    def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
+        chunk = self.data[idx]
+        x = torch.tensor(chunk[:-1], dtype=torch.long)
+        y = torch.tensor(chunk[1:], dtype=torch.long)
+        return x, y
