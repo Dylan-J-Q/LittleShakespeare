@@ -1,10 +1,10 @@
 # LittleShakespeare - Pushed to its limits
 
-[CI badge] [License badge] [Python version badge]
+[CI badge] [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Python 3.12.10](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/release/python-31213/)
 
 ## Demo
 Prompt: To be, or not to be:
-------------------------------
+
 holy mon.
 
 SISABELLA:
