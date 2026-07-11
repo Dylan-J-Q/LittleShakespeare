@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import torch.cuda.amp as amp
 import csv
 import os
 import logging
@@ -156,13 +155,13 @@ class Trainer:
             else:
                 self.patience_counter += 1
                 self.logger.info(f"No improvement in validation loss for {self.patience_counter} epoch(s).")
+            
+            # Log to CSV
+            self._log_to_csv(epoch + 1, avg_train_loss, avg_val_loss)
 
             if self.patience_counter >= self.patience:
                 self.logger.info(f"Early stopping triggered at epoch {epoch + 1}.")
                 break
-            
-            # Log to CSV
-            self._log_to_csv(epoch + 1, avg_train_loss, avg_val_loss)
 
         total_duration = time.perf_counter() - total_start_time
         self.logger.info(f"Total training time: {total_duration:.2f}s")

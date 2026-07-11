@@ -4,7 +4,4 @@
 /vocabs
 /models
 
-best_model.pt
-loss_curves_*
-training_log.csv
-training.log
+/planning
