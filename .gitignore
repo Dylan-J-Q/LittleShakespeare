@@ -1,7 +1,13 @@
 /venv
 /data
-/__pycache__
+*__pycache__*
 /vocabs
 /models
-
 /planning
+
+.pytest_cache
+
+# Packaging build artifacts
+/build
+/dist
+*.egg-info/

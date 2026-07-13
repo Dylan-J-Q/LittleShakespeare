@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "little-shakespeare"
+version = "0.1.0"
+description = "A GPT-style transformer built from scratch in PyTorch, trained on Shakespeare."
+requires-python = ">=3.12"
+dependencies = [
+    "torch>=2.9",
+    "matplotlib",
+]
+
+# NOTE: minimal manifest to restore importability via `pip install -e .`.
+# Richer packaging/tooling config (ruff, mypy, CI, pinned torch CUDA index)
+# is left for the remaining Wave 1 steps.
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/little_shakespeare"]

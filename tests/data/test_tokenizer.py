@@ -1,7 +1,8 @@
-"""Minimal guard for the BPE tokenizer. Run: python test_preprocessing.py"""
+"""Minimal guard for the BPE tokenizer."""
 import os
-from config import PreprocessingConfig
-from preprocessing import BPETokenizer
+
+from little_shakespeare.config import PreprocessingConfig
+from little_shakespeare.data.tokenizer import BPETokenizer
 
 
 def test_bpe():
@@ -24,7 +25,6 @@ def test_bpe():
 
         # 3. BPE must actually compress vs. raw characters.
         assert len(tok.encode(text)) < len(text), "no compression"
-        print("OK")
     finally:
         if os.path.exists(vocab_path):
             os.remove(vocab_path)
@@ -32,3 +32,4 @@ def test_bpe():
 
 if __name__ == "__main__":
     test_bpe()
+    print("OK")

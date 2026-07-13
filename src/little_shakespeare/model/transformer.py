@@ -1,7 +1,7 @@
 import math
 import torch
 import torch.nn as nn
-from config import ModelConfig
+from little_shakespeare.config import ModelConfig
 
 class PositionalEncoding(nn.Module):
     def __init__(self, config: ModelConfig):

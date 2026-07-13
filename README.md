@@ -156,41 +156,67 @@ flowchart TD
 ```
 LittleShakespeare/
 ├── data/
-│   └── LittleShakespeare.txt   # raw corpus; split 80/10/10 into train/val/test at runtime
+│   └── LittleShakespeare.txt        # raw corpus; split 80/10/10 into train/val/test at runtime
 ├── models/
-│   └── <n>/                    # one directory per training run, auto-incrementing
-│       ├── model.pt            # checkpoint (weights + embedded config)
-│       ├── config.json         # hyperparameter snapshot for this run
-│       ├── training.log        # human-readable training log
-│       ├── training_log.csv    # epoch, train_loss, val_loss
-│       └── loss_curves_*.png   # linear + log-scale loss curves
+│   └── <n>/                         # one directory per training run, auto-incrementing
+│       ├── model.pt                 # checkpoint (weights + embedded config)
+│       ├── config.json              # hyperparameter snapshot for this run
+│       ├── training.log             # human-readable training log
+│       ├── training_log.csv         # epoch, train_loss, val_loss
+│       └── loss_curves_*.png        # linear + log-scale loss curves
 ├── vocabs/
-│   └── <num_merges>.vocab      # cached BPE vocab + merge rules
-├── config.py                   # every hyperparameter, as 4 dataclasses
-├── preprocessing.py             # tokenizers (char-level + from-scratch BPE) and dataset chunking
-├── model_components.py          # the transformer architecture
-├── training.py                  # training loop, checkpointing, loss curve plotting
-├── inference.py                 # autoregressive text generation (CLI)
-├── main.py                      # training entry point
-├── utils.py                     # checkpoint loading
-└── test_preprocessing.py        # tokenizer sanity checks
+│   └── <num_merges>.vocab           # cached BPE vocab + merge rules
+├── scripts/
+│   ├── train.py                     # training entry point (thin CLI)
+│   └── generate.py                  # text-generation entry point (thin CLI)
+├── src/little_shakespeare/          # the importable package
+│   ├── config.py                    # every hyperparameter, as 4 dataclasses
+│   ├── run_dir.py                   # run-directory conventions + model-id resolution
+│   ├── checkpoint.py                # checkpoint save/load
+│   ├── data/
+│   │   ├── tokenizer.py             # tokenizers (char-level + from-scratch BPE)
+│   │   └── dataset.py               # block chunking into (x, y) next-token pairs
+│   ├── model/
+│   │   └── transformer.py           # the transformer architecture
+│   ├── training/
+│   │   ├── trainer.py               # training/eval loop, early stopping
+│   │   ├── reporting.py             # CSV logging + loss-curve plotting
+│   │   └── pipeline.py              # end-to-end run_training() wiring
+│   ├── inference/
+│   │   └── generator.py             # autoregressive text generation
+│   ├── eval/                        # (greenfield) evaluation harness — see Roadmap
+│   └── benchmark/                   # (greenfield) profiling & benchmarking — see Roadmap
+├── tests/
+│   └── data/
+│       └── test_tokenizer.py        # tokenizer sanity checks (pytest)
+└── pyproject.toml                   # packaging + dependencies
 ```
 
-A `src/`-based package layout, a proper test suite, and CI are planned — see Roadmap.
+The package installs editable (`pip install -e .`), so `little_shakespeare.*` imports resolve regardless of working directory. CI is planned — see Roadmap.
 
 ## Installation
-Use the requirements.txt to install all the dependencies. You may need to visit pytorch's website to download a compatible version with your system.
+This project installs as an editable package. Install the CUDA build of PyTorch **first** (the pinned `+cuXXX` wheels aren't on PyPI's default index), then do the editable install:
+
+```bash
+# 1. CUDA build of PyTorch from PyTorch's own index (developed against cu126)
+pip install torch --index-url https://download.pytorch.org/whl/cu126
+
+# 2. Editable install — pulls matplotlib and makes the little_shakespeare package importable
+pip install -e ".[dev]"
+```
+
+For a CPU-only or different-CUDA setup, pick the matching `torch` command from https://pytorch.org/get-started/locally/ in step 1.
 
 ## Usage
 
 Train a new model — creates a new auto-incrementing `models/<id>/` run directory:
 ```bash
-python main.py
+python scripts/train.py
 ```
 
 Generate text from a trained checkpoint:
 ```bash
-python inference.py --index <model_id> --prompt "To be, or not to be:"
+python scripts/generate.py --index <model_id> --prompt "To be, or not to be:"
 ```
 Omit `--index` to use the highest-numbered (most recent) run in `models/`.
 
@@ -207,11 +233,11 @@ No formal evaluation harness exists yet — building one (held-out perplexity/bi
 
 ## Testing & CI
 
-Run the tokenizer sanity check:
+Run the test suite:
 ```bash
-python test_preprocessing.py
+pytest
 ```
-This is currently the only test in the repo, and there's no CI pipeline yet — a real pytest suite and a GitHub Actions workflow (lint, type-check, test on every push) are planned next.
+The suite is currently minimal (a tokenizer sanity check), and there's no CI pipeline yet — more tests and a GitHub Actions workflow (lint, type-check, test on every push) are planned next.
 
 ## Roadmap
 
