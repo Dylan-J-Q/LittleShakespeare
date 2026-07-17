@@ -6,6 +6,9 @@ class PreprocessingConfig:
     data_path: str = "data/LittleShakespeare.txt"
     block_size: int = 512
     num_merges: int = 256
+    train_fraction: float = 0.8
+    val_fraction: float = 0.1
+    # test_fraction is implied: 1 - train_fraction - val_fraction
 
 @dataclass
 class ModelConfig:

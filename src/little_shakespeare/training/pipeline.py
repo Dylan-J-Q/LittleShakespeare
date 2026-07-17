@@ -15,6 +15,7 @@ from torch.utils.data import DataLoader
 from little_shakespeare.config import ModelConfig, TrainingConfig, PreprocessingConfig
 from little_shakespeare.data.tokenizer import BPETokenizer
 from little_shakespeare.data.dataset import ShakespeareDataset
+from little_shakespeare.data.splits import split_text
 from little_shakespeare.model.transformer import TransformerModel
 from little_shakespeare.training.trainer import Trainer
 from little_shakespeare.training import reporting
@@ -70,13 +71,7 @@ def run_training(model_config: Optional[ModelConfig] = None,
     with open(preprocessing_config.data_path, 'r', encoding='utf-8') as f:
         raw_text = f.read()
 
-    # Split text into training, validation, and test sets
-    train_size = int(len(raw_text) * 0.8)
-    val_size = int(len(raw_text) * 0.1)
-
-    train_text = raw_text[:train_size]
-    val_text = raw_text[train_size:train_size + val_size]
-    test_text = raw_text[train_size + val_size:]
+    train_text, val_text, test_text = split_text(raw_text, preprocessing_config)
 
     tokenizer = BPETokenizer(raw_text, preprocessing_config, logger=logger)
 
@@ -109,6 +104,7 @@ def run_training(model_config: Optional[ModelConfig] = None,
         training_config,
         model,
         model_dir=model_dir,
+        tokenizer=tokenizer,
         logger=logger
     )
     trainer.train(train_loader, val_loader)
@@ -116,8 +112,11 @@ def run_training(model_config: Optional[ModelConfig] = None,
 
     best_model, _, _ = load_model(checkpoint_path=str(model_dir / CHECKPOINT_FILENAME), device=training_config.device)
     trainer.set_model(best_model)
-    test_loss = trainer.evaluate(test_loader)
-    logger.info(f"Test Loss: {test_loss:.4f}")
+    test_metrics = trainer.evaluate(test_loader)
+    logger.info(
+        f"Test Loss: {test_metrics.loss:.4f} | "
+        f"Test Perplexity: {test_metrics.perplexity:.2f} | Test bpc: {test_metrics.bpc:.4f}"
+    )
 
     logger.info("Training Complete.")
     return model_id

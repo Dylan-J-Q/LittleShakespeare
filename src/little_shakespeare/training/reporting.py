@@ -10,7 +10,7 @@ from typing import Optional, Sequence
 import matplotlib.pyplot as plt
 from logging import Logger
 
-CSV_HEADER = ["epoch", "train_loss", "val_loss"]
+CSV_HEADER = ["epoch", "train_loss", "val_loss", "val_perplexity", "val_bpc"]
 
 
 def init_csv_log(log_file) -> None:
@@ -21,9 +21,13 @@ def init_csv_log(log_file) -> None:
             csv.writer(f).writerow(CSV_HEADER)
 
 
-def append_csv_row(log_file, epoch: int, train_loss: float, val_loss: float) -> None:
+def append_csv_row(log_file, epoch: int, train_loss: float, val_loss: float,
+                    val_perplexity: float, val_bpc: float) -> None:
     with open(log_file, mode='a', newline='') as f:
-        csv.writer(f).writerow([epoch, f"{train_loss:.4f}", f"{val_loss:.4f}"])
+        csv.writer(f).writerow([
+            epoch, f"{train_loss:.4f}", f"{val_loss:.4f}",
+            f"{val_perplexity:.4f}", f"{val_bpc:.4f}",
+        ])
 
 
 def plot_losses(train_losses: Sequence[float], val_losses: Sequence[float],

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Purpose
 
-This is an **educational** project to build a GPT-style Transformer completely from scratch in PyTorch, trained on a small corpus of Shakespeare text (`data/LittleShakespeare.txt`). The point is not the artifact — it's for the user to gain a granular, from-first-principles understanding of both how a transformer works and how to make one actually perform well.
+This is an **educational** project to build a GPT-style Transformer completely from scratch in PyTorch, trained on a small corpus of Shakespeare text (`data/LittleShakespeare.txt`). The point is not the artifact — it's for the user to gain a granular, from-first-principles understanding of both how a transformer works and how to make one actually perform well. Any teaching materials created should go into the /teaching folder. These files can also be resued when the user asks a question. Make sure to name the files and folders appropriately.
 
 ## Current Phase: Evaluation & Performance
 
