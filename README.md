@@ -241,7 +241,7 @@ The suite is currently minimal (a tokenizer sanity check), and there's no CI pip
 
 ## Roadmap
 
-Phases 1–5 are complete — every core component (data pipeline, tokenizer, embeddings/positional encoding, multi-head attention/feed-forward/transformer block, training loop, autoregressive sampling) was implemented from scratch.
+Phases 1–5 are complete — every core component (data pipeline, tokenizer, embeddings/positional encoding, multi-head attention/feed-forward/transformer block, training loop, autoregressive sampling) was implemented from scratch. Has subsequently been swapped for premade components in pytorch to improve training speed.
 
 **Current phase: Evaluation & Performance** — pushing this model as far as the hardware above allows:
 - [ ] Objective evaluation — perplexity/bits-per-character, sample-quality A/B comparisons, a cross-run leaderboard

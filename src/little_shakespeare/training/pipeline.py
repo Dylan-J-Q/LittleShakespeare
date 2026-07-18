@@ -6,7 +6,9 @@ be driven from a thin CLI (``scripts/train.py``) or exercised in isolation.
 """
 import json
 import logging
+import subprocess
 from dataclasses import asdict
+from datetime import datetime
 from logging import Logger
 from typing import Optional
 
@@ -16,6 +18,8 @@ from little_shakespeare.config import ModelConfig, TrainingConfig, Preprocessing
 from little_shakespeare.data.tokenizer import BPETokenizer
 from little_shakespeare.data.dataset import ShakespeareDataset
 from little_shakespeare.data.splits import split_text
+from little_shakespeare.eval.perplexity import accumulate_nll, metrics_report
+from little_shakespeare.eval.leaderboard import build_leaderboard, write_csv as write_leaderboard_csv, write_markdown as write_leaderboard_markdown
 from little_shakespeare.model.transformer import TransformerModel
 from little_shakespeare.training.trainer import Trainer
 from little_shakespeare.training import reporting
@@ -23,10 +27,25 @@ from little_shakespeare.checkpoint import load_model
 from little_shakespeare.run_dir import (
     get_next_model_id,
     model_dir as model_dir_for,
+    BENCHMARKS_ROOT,
     CONFIG_FILENAME,
+    METRICS_FILENAME,
     LOG_FILENAME,
     CHECKPOINT_FILENAME,
 )
+
+
+def _current_git_commit() -> Optional[str]:
+    """Short commit hash for metrics.json's provenance, or None outside a repo /
+    if git isn't on PATH — never worth failing a training run over."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            capture_output=True, text=True, timeout=5, check=True,
+        )
+        return result.stdout.strip()
+    except (subprocess.SubprocessError, OSError):
+        return None
 
 
 def _build_loader(dataset, training_config: TrainingConfig, shuffle: bool) -> DataLoader:
@@ -43,11 +62,16 @@ def _build_loader(dataset, training_config: TrainingConfig, shuffle: bool) -> Da
 def run_training(model_config: Optional[ModelConfig] = None,
                  training_config: Optional[TrainingConfig] = None,
                  preprocessing_config: Optional[PreprocessingConfig] = None,
-                 logger: Optional[Logger] = None) -> int:
+                 logger: Optional[Logger] = None,
+                 note: Optional[str] = None) -> int:
     """Run a full training pass and return the new run's model id.
 
     If ``logger`` is None, default file+stream logging is configured into the
     new run directory (preserving the original ``main.py`` behavior).
+
+    ``note`` is a freeform hypothesis string ("doubled batch size to test VRAM
+    headroom") written into metrics.json — writing it down before training
+    starts is the point, not documentation after the fact.
     """
     model_config = model_config or ModelConfig()
     training_config = training_config or TrainingConfig()
@@ -94,7 +118,8 @@ def run_training(model_config: Optional[ModelConfig] = None,
     config_data = {
         "preprocessing_config": asdict(preprocessing_config),
         "model_config": asdict(model_config),
-        "training_config": asdict(training_config)
+        "training_config": asdict(training_config),
+        "vocab_size": tokenizer.get_vocab_size(),
     }
     with open(model_dir / CONFIG_FILENAME, "w") as f:
         json.dump(config_data, f, indent=4)
@@ -112,11 +137,42 @@ def run_training(model_config: Optional[ModelConfig] = None,
 
     best_model, _, _ = load_model(checkpoint_path=str(model_dir / CHECKPOINT_FILENAME), device=training_config.device)
     trainer.set_model(best_model)
-    test_metrics = trainer.evaluate(test_loader)
+
+    # Full reports (not just Trainer.evaluate()'s loss/perplexity/bpc) on the
+    # BEST checkpoint specifically — training may run patience epochs past
+    # the best one before stopping, so the last logged CSV row isn't it.
+    val_stats = accumulate_nll(trainer.model, val_loader, tokenizer, trainer.device)
+    test_stats = accumulate_nll(trainer.model, test_loader, tokenizer, trainer.device)
+    val_report = metrics_report(val_stats)
+    test_report = metrics_report(test_stats)
     logger.info(
-        f"Test Loss: {test_metrics.loss:.4f} | "
-        f"Test Perplexity: {test_metrics.perplexity:.2f} | Test bpc: {test_metrics.bpc:.4f}"
+        f"Val  | Loss: {val_report['loss']:.4f} | Perplexity: {val_report['perplexity']:.2f} | bpc: {val_report['bpc']:.4f}"
     )
+    logger.info(
+        f"Test | Loss: {test_report['loss']:.4f} | Perplexity: {test_report['perplexity']:.2f} | bpc: {test_report['bpc']:.4f}"
+    )
+
+    metrics_data = {
+        "note": note,
+        "timestamp": datetime.now().isoformat(timespec="seconds"),
+        "git_commit": _current_git_commit(),
+        "final_epoch": trainer.final_epoch,
+        "early_stopped": trainer.early_stopped,
+        "best_val_loss": trainer.best_val_loss,
+        "total_train_time_seconds": trainer.total_train_time,
+        "val": val_report,
+        "test": test_report,
+    }
+    with open(model_dir / METRICS_FILENAME, "w") as f:
+        json.dump(metrics_data, f, indent=4)
+
+    # Cheap (no model loading) — keep benchmarks/leaderboard.* current on every
+    # run rather than requiring a separate manual step someone has to remember.
+    leaderboard_rows = build_leaderboard()
+    BENCHMARKS_ROOT.mkdir(exist_ok=True)
+    write_leaderboard_markdown(leaderboard_rows, BENCHMARKS_ROOT / "leaderboard.md")
+    write_leaderboard_csv(leaderboard_rows, BENCHMARKS_ROOT / "leaderboard.csv")
+    logger.info(f"Leaderboard updated: benchmarks/leaderboard.md ({len(leaderboard_rows)} runs)")
 
     logger.info("Training Complete.")
     return model_id

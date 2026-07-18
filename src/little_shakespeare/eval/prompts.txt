@@ -1,0 +1,10 @@
+# Fixed prompt set for compare.py's sample-quality A/B comparisons.
+# One prompt per line; lines starting with # are comments and blank lines are skipped.
+# Edit deliberately: changing this set changes what "comparable" means across
+# before/after runs of compare.py — that's why it's versioned, not generated.
+To be, or not to be:
+O Romeo, Romeo, wherefore art thou
+Now is the winter of our discontent,
+What light through yonder window breaks?
+Friends, Romans, countrymen, lend me your ears;
+Once more unto the breach, dear friends, once more;

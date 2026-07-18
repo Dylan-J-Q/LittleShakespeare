@@ -10,9 +10,11 @@ from typing import List, Optional
 
 MODELS_ROOT = Path("models")
 VOCABS_ROOT = Path("vocabs")
+BENCHMARKS_ROOT = Path("benchmarks")
 
 CHECKPOINT_FILENAME = "model.pt"
 CONFIG_FILENAME = "config.json"
+METRICS_FILENAME = "metrics.json"
 LOG_FILENAME = "training.log"
 CSV_LOG_FILENAME = "training_log.csv"
 
@@ -47,3 +49,18 @@ def checkpoint_path(model_id: int) -> Path:
 
 def config_path(model_id: int) -> Path:
     return model_dir(model_id) / CONFIG_FILENAME
+
+
+def metrics_path(model_id: int) -> Path:
+    return model_dir(model_id) / METRICS_FILENAME
+
+
+def vocab_path(data_path: str, num_merges: int) -> Path:
+    """vocabs/<dataset-stem>/<num_merges>.vocab — namespaced by which text
+    file produced it. Keyed on num_merges alone (the old flat vocabs/<n>.vocab
+    layout), swapping PreprocessingConfig.data_path to a different file would
+    silently reuse a vocab trained on the previous dataset's statistics.
+    Uses the filename stem, not the raw path, so this stays one clean
+    directory level rather than mirroring data_path's own subdirectories."""
+    dataset_name = Path(data_path).stem
+    return VOCABS_ROOT / dataset_name / f"{num_merges}.vocab"

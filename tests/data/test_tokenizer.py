@@ -3,12 +3,13 @@ import os
 
 from little_shakespeare.config import PreprocessingConfig
 from little_shakespeare.data.tokenizer import BPETokenizer
+from little_shakespeare.run_dir import vocab_path as resolve_vocab_path
 
 
 def test_bpe():
     text = "the theatre saw the theme of the throne. " * 50
     cfg = PreprocessingConfig(num_merges=40)
-    vocab_path = os.path.join("vocabs", f"{cfg.num_merges}.vocab")
+    vocab_path = str(resolve_vocab_path(cfg.data_path, cfg.num_merges))
     if os.path.exists(vocab_path):          # force fresh training
         os.remove(vocab_path)
     try:

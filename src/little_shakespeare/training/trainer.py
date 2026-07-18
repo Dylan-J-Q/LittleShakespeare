@@ -65,6 +65,11 @@ class Trainer:
         self.patience_counter = 0
         self.logger = logger
 
+        # Populated by train() — the run-level summary metrics.json needs.
+        self.final_epoch = 0
+        self.early_stopped = False
+        self.total_train_time = 0.0
+
         # Initialize GradScaler for mixed precision
         self.scaler = None
         if self.training_config.mixed_precision and self.device == "cuda":
@@ -172,12 +177,15 @@ class Trainer:
             reporting.append_csv_row(self.log_file, epoch + 1, avg_train_loss,
                                       val_metrics.loss, val_metrics.perplexity, val_metrics.bpc)
 
+            self.final_epoch = epoch + 1
+
             if self.patience_counter >= self.patience:
                 self.logger.info(f"Early stopping triggered at epoch {epoch + 1}.")
+                self.early_stopped = True
                 break
 
-        total_duration = time.perf_counter() - total_start_time
-        self.logger.info(f"Total training time: {total_duration:.2f}s")
+        self.total_train_time = time.perf_counter() - total_start_time
+        self.logger.info(f"Total training time: {self.total_train_time:.2f}s")
 
     def evaluate(self, loader: DataLoader) -> EvalMetrics:
         """

@@ -12,17 +12,28 @@ from little_shakespeare.config import GenerationConfig, PreprocessingConfig
 from little_shakespeare.checkpoint import load_model
 from little_shakespeare.data.tokenizer import BPETokenizer
 from little_shakespeare.inference.generator import TextGenerator
-from little_shakespeare.run_dir import resolve_model_id, checkpoint_path, config_path, VOCABS_ROOT
+from little_shakespeare.run_dir import resolve_model_id, checkpoint_path, config_path, vocab_path as resolve_vocab_path
 
 
 def main():
     parser = argparse.ArgumentParser(description="Run inference on the model.")
     parser.add_argument("--index", type=int, help="Model index to use.")
     parser.add_argument("--prompt", type=str, help="Prompt for generation.")
+    parser.add_argument("--temperature", type=float, help="Override GenerationConfig.temperature.")
+    parser.add_argument("--top_k", type=int, help="Override GenerationConfig.top_k.")
+    parser.add_argument("--top_p", type=float, help="Override GenerationConfig.top_p.")
+    parser.add_argument("--max_length", type=int, help="Override GenerationConfig.max_length.")
     args = parser.parse_args()
 
     gen_config = GenerationConfig()
-    preprocessing_config = PreprocessingConfig()
+    if args.temperature is not None:
+        gen_config.temperature = args.temperature
+    if args.top_k is not None:
+        gen_config.top_k = args.top_k
+    if args.top_p is not None:
+        gen_config.top_p = args.top_p
+    if args.max_length is not None:
+        gen_config.max_length = args.max_length
     print(f"Using device: {gen_config.device}")
 
     model_index = resolve_model_id(args.index)
@@ -41,13 +52,17 @@ def main():
     if model_index is not None:
         with open(config_path(model_index), "r") as f:
             config_data = json.load(f)
-        num_merges = config_data["preprocessing_config"]["num_merges"]
-        vocab_path = VOCABS_ROOT / f"{num_merges}.vocab"
+        # This run's OWN saved preprocessing config, not today's config.py
+        # defaults — a run trained with a non-default data_path/num_merges/
+        # block_size must be evaluated with that same setup, not a guess.
+        preprocessing_config = PreprocessingConfig(**config_data["preprocessing_config"])
+        vpath = resolve_vocab_path(preprocessing_config.data_path, preprocessing_config.num_merges)
     else:
-        vocab_path = Path("tokenizer.vocab")
+        preprocessing_config = PreprocessingConfig()
+        vpath = Path("tokenizer.vocab")
 
     tokenizer = BPETokenizer("", preprocessing_config)
-    tokenizer.load_vocab(str(vocab_path))
+    tokenizer.load_vocab(str(vpath))
     generator = TextGenerator(model, tokenizer, device=gen_config.device, block_size=preprocessing_config.block_size)
 
     prompt = args.prompt if args.prompt is not None else "To be, or not to be:"

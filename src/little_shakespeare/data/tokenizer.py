@@ -1,9 +1,9 @@
 import json
-import os
 from typing import List
 from abc import ABC, abstractmethod
 from collections import Counter
 from little_shakespeare.config import PreprocessingConfig
+from little_shakespeare.run_dir import vocab_path as resolve_vocab_path
 
 UNK_TOKEN = ""
 SPECIAL_TOKENS = {
@@ -59,10 +59,10 @@ class BPETokenizer(BaseTokenizer):
         super().__init__()
         self.logger = logger
         self.merge_rules = []
-        vocab_path = os.path.join("vocabs", f"{config.num_merges}.vocab")
+        vocab_file = resolve_vocab_path(config.data_path, config.num_merges)
 
-        if os.path.exists(vocab_path):
-            self.load_vocab(vocab_path)
+        if vocab_file.exists():
+            self.load_vocab(str(vocab_file))
         else:
             # Initialize with characters
             tokens = list(text)
@@ -105,8 +105,8 @@ class BPETokenizer(BaseTokenizer):
                 tokens = new_tokens
 
             # Save the vocab after training
-            os.makedirs(os.path.dirname(vocab_path), exist_ok=True)
-            self.save_vocab(vocab_path)
+            vocab_file.parent.mkdir(parents=True, exist_ok=True)
+            self.save_vocab(str(vocab_file))
             if self.logger:
                 self.logger.info("BPE training complete and vocab saved.")
 
