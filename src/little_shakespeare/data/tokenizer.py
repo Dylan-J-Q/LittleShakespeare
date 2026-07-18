@@ -110,6 +110,22 @@ class BPETokenizer(BaseTokenizer):
             if self.logger:
                 self.logger.info("BPE training complete and vocab saved.")
 
+    @classmethod
+    def from_vocab_file(cls, config: PreprocessingConfig) -> "BPETokenizer":
+        """Load an already-cached vocab for this exact (data_path, num_merges)
+        combo — for callers that only ever load a known-trained tokenizer,
+        never train one. Raises a clear error if the vocab is missing,
+        instead of the constructor's implicit fallback of silently training
+        a fresh (empty, if handed no text) vocab in its place.
+        """
+        vocab_file = resolve_vocab_path(config.data_path, config.num_merges)
+        if not vocab_file.exists():
+            raise FileNotFoundError(
+                f"No cached vocab at {vocab_file} — train a model with this "
+                f"PreprocessingConfig (num_merges={config.num_merges}) first."
+            )
+        return cls("", config)
+
     def encode(self, text: str) -> List[int]:
         tokens = list(text)
         for str1, str2 in self.merge_rules:

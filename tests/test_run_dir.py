@@ -19,10 +19,3 @@ def test_different_num_merges_get_different_vocab_paths_within_the_same_dataset(
     b = vocab_path("data/LittleShakespeare.txt", 512)
     assert a != b
     assert a.parent == b.parent  # same dataset -> same subdirectory
-
-
-if __name__ == "__main__":
-    test_vocab_path_uses_the_filename_stem_not_the_full_path()
-    test_different_datasets_get_different_vocab_paths()
-    test_different_num_merges_get_different_vocab_paths_within_the_same_dataset()
-    print("OK")

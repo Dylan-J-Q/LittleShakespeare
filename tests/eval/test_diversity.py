@@ -30,12 +30,3 @@ def test_diversity_report_returns_both_metrics():
     assert set(report.keys()) == {"distinct_1", "distinct_2"}
     assert 0.0 <= report["distinct_1"] <= 1.0
     assert 0.0 <= report["distinct_2"] <= 1.0
-
-
-if __name__ == "__main__":
-    test_fully_repetitive_text_has_low_distinct_1()
-    test_fully_unique_text_has_distinct_1_of_one()
-    test_distinct_2_catches_repetition_distinct_1_might_miss()
-    test_text_shorter_than_n_returns_zero_not_an_error()
-    test_diversity_report_returns_both_metrics()
-    print("OK")

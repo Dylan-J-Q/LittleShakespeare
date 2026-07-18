@@ -45,7 +45,7 @@ def test_accumulate_nll_totals_match_a_tiny_real_model_and_loader():
     loader = DataLoader(dataset, batch_size=4, shuffle=False)
 
     model_config = ModelConfig(
-        embedding_dim=8, d_model=8, num_heads=2, ff_hidden_dim=16,
+        d_model=8, num_heads=2, ff_hidden_dim=16,
         num_layers=1, dropout_rate=0.0, max_pos_encoding_len=32,
     )
     model = TransformerModel(vocab_size=tokenizer.get_vocab_size(), config=model_config)
@@ -61,11 +61,3 @@ def test_accumulate_nll_totals_match_a_tiny_real_model_and_loader():
     # And the two derived metrics should be finite, sane numbers off the same stats.
     assert math.isfinite(perplexity(stats))
     assert math.isfinite(bits_per_char(stats))
-
-
-if __name__ == "__main__":
-    test_perplexity_of_uniform_distribution_equals_branching_factor()
-    test_perplexity_matches_exp_of_average_nll()
-    test_bits_per_char_divides_by_characters_not_tokens()
-    test_accumulate_nll_totals_match_a_tiny_real_model_and_loader()
-    print("OK")

@@ -14,7 +14,7 @@ from typing import Optional
 
 from torch.utils.data import DataLoader
 
-from little_shakespeare.config import ModelConfig, TrainingConfig, PreprocessingConfig
+from little_shakespeare.config import ModelConfig, TrainingConfig, PreprocessingConfig, validate_configs
 from little_shakespeare.data.tokenizer import BPETokenizer
 from little_shakespeare.data.dataset import ShakespeareDataset
 from little_shakespeare.data.splits import split_text
@@ -76,6 +76,7 @@ def run_training(model_config: Optional[ModelConfig] = None,
     model_config = model_config or ModelConfig()
     training_config = training_config or TrainingConfig()
     preprocessing_config = preprocessing_config or PreprocessingConfig()
+    validate_configs(model_config, preprocessing_config)
 
     model_id = get_next_model_id()
     model_dir = model_dir_for(model_id)

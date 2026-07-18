@@ -6,13 +6,12 @@
 """
 import argparse
 import json
-from pathlib import Path
 
 from little_shakespeare.config import GenerationConfig, PreprocessingConfig
 from little_shakespeare.checkpoint import load_model
 from little_shakespeare.data.tokenizer import BPETokenizer
 from little_shakespeare.inference.generator import TextGenerator
-from little_shakespeare.run_dir import resolve_model_id, checkpoint_path, config_path, vocab_path as resolve_vocab_path
+from little_shakespeare.run_dir import resolve_model_id, checkpoint_path, config_path
 
 
 def main():
@@ -37,32 +36,25 @@ def main():
     print(f"Using device: {gen_config.device}")
 
     model_index = resolve_model_id(args.index)
+    if model_index is None:
+        print("No trained models found in models/. Run `python scripts/train.py` first.")
+        return
 
-    if model_index is not None:
-        ckpt_path = checkpoint_path(model_index)
-    else:
-        ckpt_path = Path("best_model.pt")
-
+    ckpt_path = checkpoint_path(model_index)
     if not ckpt_path.exists():
         print(f"Error: {ckpt_path} not found.")
         return
 
     model, model_config, training_config = load_model(checkpoint_path=str(ckpt_path), device=gen_config.device)
 
-    if model_index is not None:
-        with open(config_path(model_index), "r") as f:
-            config_data = json.load(f)
-        # This run's OWN saved preprocessing config, not today's config.py
-        # defaults — a run trained with a non-default data_path/num_merges/
-        # block_size must be evaluated with that same setup, not a guess.
-        preprocessing_config = PreprocessingConfig(**config_data["preprocessing_config"])
-        vpath = resolve_vocab_path(preprocessing_config.data_path, preprocessing_config.num_merges)
-    else:
-        preprocessing_config = PreprocessingConfig()
-        vpath = Path("tokenizer.vocab")
+    with open(config_path(model_index), "r") as f:
+        config_data = json.load(f)
+    # This run's OWN saved preprocessing config, not today's config.py
+    # defaults — a run trained with a non-default data_path/num_merges/
+    # block_size must be evaluated with that same setup, not a guess.
+    preprocessing_config = PreprocessingConfig(**config_data["preprocessing_config"])
 
-    tokenizer = BPETokenizer("", preprocessing_config)
-    tokenizer.load_vocab(str(vpath))
+    tokenizer = BPETokenizer.from_vocab_file(preprocessing_config)
     generator = TextGenerator(model, tokenizer, device=gen_config.device, block_size=preprocessing_config.block_size)
 
     prompt = args.prompt if args.prompt is not None else "To be, or not to be:"

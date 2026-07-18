@@ -13,7 +13,6 @@ Usage:
 """
 import argparse
 import itertools
-import json
 from dataclasses import replace
 from datetime import datetime
 from pathlib import Path
@@ -22,17 +21,15 @@ from typing import Dict, List
 import torch
 from torch.utils.data import DataLoader
 
-from little_shakespeare.checkpoint import load_model
-from little_shakespeare.config import GenerationConfig, PreprocessingConfig
+from little_shakespeare.checkpoint import load_run
+from little_shakespeare.config import GenerationConfig
 from little_shakespeare.data.dataset import ShakespeareDataset
-from little_shakespeare.data.splits import split_text
-from little_shakespeare.data.tokenizer import BPETokenizer
 from little_shakespeare.eval.diversity import diversity_report
 from little_shakespeare.eval.memorization import check_memorization
 from little_shakespeare.eval.perplexity import aggregate_nll_stats, accumulate_nll_per_example, metrics_report
 from little_shakespeare.eval.significance import paired_bootstrap_difference_ci
 from little_shakespeare.inference.generator import TextGenerator
-from little_shakespeare.run_dir import BENCHMARKS_ROOT, checkpoint_path, config_path
+from little_shakespeare.run_dir import BENCHMARKS_ROOT
 
 PROMPTS_PATH = Path(__file__).parent / "prompts.txt"
 COMPARE_OUTPUT_ROOT = BENCHMARKS_ROOT / "compare"
@@ -47,19 +44,13 @@ class Run:
     """Everything needed to generate from, and evaluate, one checkpoint."""
 
     def __init__(self, model_id: int):
-        with open(config_path(model_id)) as f:
-            saved_config = json.load(f)
-        self.preprocessing_config = PreprocessingConfig(**saved_config["preprocessing_config"])
-
-        with open(self.preprocessing_config.data_path, "r", encoding="utf-8") as f:
-            raw_text = f.read()
-        self.train_text, self.val_text, _ = split_text(raw_text, self.preprocessing_config)
-
-        self.tokenizer = BPETokenizer(raw_text, self.preprocessing_config)
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.model, _, _ = load_model(
-            str(checkpoint_path(model_id)), device=self.device, vocab_size=self.tokenizer.get_vocab_size()
-        )
+        loaded = load_run(model_id)
+        self.preprocessing_config = loaded.preprocessing_config
+        self.train_text = loaded.train_text
+        self.val_text = loaded.val_text
+        self.tokenizer = loaded.tokenizer
+        self.device = loaded.device
+        self.model = loaded.model
         self.generator = TextGenerator(
             self.model, self.tokenizer, device=self.device, block_size=self.preprocessing_config.block_size
         )

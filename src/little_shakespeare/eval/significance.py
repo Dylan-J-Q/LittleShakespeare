@@ -14,16 +14,6 @@ from little_shakespeare.eval.perplexity import NLLStats, aggregate_nll_stats, bi
 MetricFn = Callable[[NLLStats], float]
 
 
-def bootstrap_metric_ci(per_example_stats: List[NLLStats], metric_fn: MetricFn = bits_per_char,
-                         n_resamples: int = 1000, confidence: float = 0.95,
-                         seed: int = 0) -> Tuple[float, float, float]:
-    """(point_estimate, lower, upper) for metric_fn over per_example_stats."""
-    point = metric_fn(aggregate_nll_stats(per_example_stats))
-    resampled = _resample_metric(per_example_stats, metric_fn, n_resamples, seed)
-    lower, upper = _interval(resampled, confidence)
-    return point, lower, upper
-
-
 def paired_bootstrap_difference_ci(stats_a: List[NLLStats], stats_b: List[NLLStats],
                                     metric_fn: MetricFn = bits_per_char, n_resamples: int = 1000,
                                     confidence: float = 0.95, seed: int = 0) -> Tuple[float, float, float]:
@@ -50,17 +40,6 @@ def paired_bootstrap_difference_ci(stats_a: List[NLLStats], stats_b: List[NLLSta
 
     lower, upper = _interval(sorted(diffs), confidence)
     return point_diff, lower, upper
-
-
-def _resample_metric(stats: List[NLLStats], metric_fn: MetricFn, n_resamples: int, seed: int) -> List[float]:
-    rng = random.Random(seed)
-    n = len(stats)
-    values = []
-    for _ in range(n_resamples):
-        sample = [stats[rng.randrange(n)] for _ in range(n)]
-        values.append(metric_fn(aggregate_nll_stats(sample)))
-    values.sort()
-    return values
 
 
 def _interval(sorted_values: List[float], confidence: float) -> Tuple[float, float]:

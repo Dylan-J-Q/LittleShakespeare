@@ -134,11 +134,3 @@ def test_sorted_ascending_by_bpc_with_missing_last(tmp_path):
 
 def test_empty_models_root_returns_empty_list(tmp_path):
     assert build_leaderboard(tmp_path / "does_not_exist") == []
-
-
-if __name__ == "__main__":
-    import tempfile
-    from pathlib import Path
-    with tempfile.TemporaryDirectory() as d:
-        test_run_with_metrics_json_uses_its_values(Path(d) / "a")
-    print("OK (run via pytest for full coverage)")

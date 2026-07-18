@@ -32,10 +32,3 @@ def test_splits_are_contiguous_and_lossless():
 def test_fractions_summing_to_one_or_more_is_rejected():
     with pytest.raises(AssertionError):
         split_text("x" * 100, PreprocessingConfig(train_fraction=0.8, val_fraction=0.3))
-
-
-if __name__ == "__main__":
-    test_default_fractions_give_80_10_10()
-    test_custom_fractions_are_honored()
-    test_splits_are_contiguous_and_lossless()
-    print("OK")

@@ -6,12 +6,11 @@ from little_shakespeare.config import ModelConfig
 class PositionalEncoding(nn.Module):
     def __init__(self, config: ModelConfig):
         super().__init__()
-        self.embedding_dim = config.embedding_dim
 
-        # Create a matrix of shape (max_pos_encoding_len, embedding_dim) for positional encodings
-        pe = torch.zeros(config.max_pos_encoding_len, config.embedding_dim)
+        # Create a matrix of shape (max_pos_encoding_len, d_model) for positional encodings
+        pe = torch.zeros(config.max_pos_encoding_len, config.d_model)
         position = torch.arange(0, config.max_pos_encoding_len, dtype=torch.float).unsqueeze(1)
-        div_term = torch.exp(torch.arange(0, config.embedding_dim, 2).float() * (-math.log(10000.0) / config.embedding_dim))
+        div_term = torch.exp(torch.arange(0, config.d_model, 2).float() * (-math.log(10000.0) / config.d_model))
         
         pe[:, 0::2] = torch.sin(position * div_term)
         pe[:, 1::2] = torch.cos(position * div_term)
@@ -60,7 +59,7 @@ class TransformerBlock(nn.Module):
 class TransformerModel(nn.Module):
     def __init__(self, vocab_size: int, config: ModelConfig):
         super().__init__()
-        self.embedding = nn.Embedding(vocab_size, config.embedding_dim)
+        self.embedding = nn.Embedding(vocab_size, config.d_model)
         self.pos_encoding = PositionalEncoding(config)
         self.transformer_blocks = nn.ModuleList([
             TransformerBlock(config) 

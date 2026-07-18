@@ -12,13 +12,18 @@ class PreprocessingConfig:
 
 @dataclass
 class ModelConfig:
-    embedding_dim: int = 512
     d_model: int = 512
     num_heads: int = 16
     ff_hidden_dim: int = 2048
     num_layers: int = 6
     dropout_rate: float = 0.1
     max_pos_encoding_len: int = 5000
+
+    def __post_init__(self):
+        assert self.d_model % self.num_heads == 0, (
+            f"d_model ({self.d_model}) must be divisible by num_heads ({self.num_heads}) "
+            "— attention splits d_model evenly across heads."
+        )
 
 @dataclass
 class TrainingConfig:
@@ -40,3 +45,12 @@ class GenerationConfig:
     top_k: int = 50
     top_p: float = 0.85
     device: str = "cuda" if torch.cuda.is_available() else "cpu"
+
+
+def validate_configs(model_config: ModelConfig, preprocessing_config: PreprocessingConfig) -> None:
+    """Cross-config invariant neither dataclass can check alone."""
+    assert preprocessing_config.block_size <= model_config.max_pos_encoding_len, (
+        f"block_size ({preprocessing_config.block_size}) must not exceed "
+        f"max_pos_encoding_len ({model_config.max_pos_encoding_len}) — positions beyond "
+        "max_pos_encoding_len have no positional encoding to add."
+    )

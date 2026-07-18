@@ -44,12 +44,3 @@ def test_check_memorization_combines_both_signals():
     assert report.overlap_fraction > 0
     assert report.longest_match_words > 0
     assert report.longest_match_text is not None
-
-
-if __name__ == "__main__":
-    test_verbatim_copy_has_full_overlap()
-    test_novel_text_has_zero_overlap()
-    test_longest_verbatim_match_finds_the_exact_copied_span()
-    test_no_match_returns_zero_and_none()
-    test_check_memorization_combines_both_signals()
-    print("OK")
